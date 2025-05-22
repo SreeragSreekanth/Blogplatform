@@ -31,7 +31,7 @@ export default function BlogList() {
               <h2 className="text-2xl font-semibold mb-2">{blog.title}</h2>
               <p className="text-gray-700 mb-2">{blog.excerpt}</p>
               <Link
-                to={`/blogs/${blog.id}`}
+                to={`/blogs/${blog.slug}`}
                 className="text-indigo-600 font-medium hover:underline"
               >
                 Read more →

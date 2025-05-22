@@ -10,6 +10,8 @@ import Navbar from "./components/Navbar";
 import BlogList from "./pages/BlogList";
 import BlogDetail from "./pages/BlogDetail";
 import BlogCreate from "./components/BlogCreate";
+import BlogEditForm from "./components/BlogEditForm";
+
 
 
 
@@ -23,8 +25,10 @@ function App() {
         <Route path="/register" element={<Register />} /> {/* Register page */}
         <Route path="/profile/:id" element={<Profile />} /> {/* Profile page */}
         <Route path="/blogs" element={<BlogList />} />
-        <Route path="/blogs/:id" element={<BlogDetail />} />
+        <Route path="/blogs/:slug" element={<BlogDetail />} />
         <Route path="/blogs/create" element={<BlogCreate />} />
+        <Route path="/blogs/:slug/edit" element={<BlogEditForm />} />
+
 
       </Routes>
     </Router>

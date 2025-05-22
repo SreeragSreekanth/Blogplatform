@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FiCalendar, FiUser, FiTag, FiFolder } from "react-icons/fi";
 import { motion } from "framer-motion";
@@ -7,7 +7,9 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 export default function BlogDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const loggedInUsername = localStorage.getItem("username");
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,26 +19,40 @@ export default function BlogDetail() {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/posts/${id}/`);
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/posts/${slug}/`);
         
-        // Ensure author data exists
         if (!response.data.author) {
           throw new Error("Author information missing from blog post");
         }
-        
+
         setBlog(response.data);
       } catch (err) {
         console.error("Error loading blog:", err);
-        setError(err.response?.data?.message || 
-                err.message || 
-                "Failed to load blog post");
+        setError(err.response?.data?.message || err.message || "Failed to load blog post");
       } finally {
         setLoading(false);
       }
     };
 
     fetchBlog();
-  }, [id]);
+  }, [slug]);
+
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this post?");
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/delete/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+      navigate("/"); // redirect to homepage
+    } catch (err) {
+      alert("Failed to delete post.");
+      console.error("Delete error:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -103,11 +119,29 @@ export default function BlogDetail() {
                 })}
               </span>
             </div>
-            
+
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               {blog.title}
             </h1>
-            
+
+            {/* ✅ Conditional Buttons */}
+            {loggedInUsername === blog.author && (
+              <div className="flex gap-4 mt-4">
+                <Link
+                  to={`/blogs/${blog.slug}/edit`}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                >
+                  ✏️ Edit Post
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  🗑️ Delete Post
+                </button>
+              </div>
+            )}
+
             {(blog.category || blog.tags?.length > 0) && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {blog.category && (

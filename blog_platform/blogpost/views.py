@@ -40,11 +40,13 @@ class BlogPostDetailView(generics.RetrieveAPIView):
     queryset = BlogPost.objects.all()
     serializer_class = BlogPostDetailSerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = 'slug'
 
 # Update a BlogPost (Only by the author)
 class BlogPostUpdateView(generics.UpdateAPIView):
     queryset = BlogPost.objects.all()
     serializer_class = BlogPostCreateUpdateSerializer
+    lookup_field = 'slug'
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_update(self, serializer):
@@ -56,6 +58,7 @@ class BlogPostUpdateView(generics.UpdateAPIView):
 class BlogPostDeleteView(generics.DestroyAPIView):
     queryset = BlogPost.objects.all()
     serializer_class = BlogPostCreateUpdateSerializer
+    lookup_field = 'slug'
     permission_classes = [permissions.IsAuthenticated]
 
 
