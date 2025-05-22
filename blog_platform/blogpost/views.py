@@ -1,15 +1,15 @@
 from rest_framework import generics, permissions,filters
-from .models import BlogPost
-from .serializers import BlogPostSerializer
+from .models import BlogPost,Category, Tag
+from .serializers import BlogPostCreateUpdateSerializer, BlogPostDetailSerializer,CategorySerializer,TagSerializer
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-
+from django.core.exceptions import PermissionDenied
 
 
 # Create a BlogPost
 class BlogPostCreateView(generics.CreateAPIView):
     queryset = BlogPost.objects.all()
-    serializer_class = BlogPostSerializer
+    serializer_class = BlogPostCreateUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
@@ -23,7 +23,7 @@ class BlogPostPagination(PageNumberPagination):
 # List all BlogPosts
 class BlogPostListView(generics.ListAPIView):
     queryset = BlogPost.objects.all()
-    serializer_class = BlogPostSerializer
+    serializer_class = BlogPostDetailSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = BlogPostPagination
 
@@ -38,20 +38,36 @@ class BlogPostListView(generics.ListAPIView):
 # Retrieve a single BlogPost
 class BlogPostDetailView(generics.RetrieveAPIView):
     queryset = BlogPost.objects.all()
-    serializer_class = BlogPostSerializer
+    serializer_class = BlogPostDetailSerializer
     permission_classes = [permissions.AllowAny]
 
 # Update a BlogPost (Only by the author)
 class BlogPostUpdateView(generics.UpdateAPIView):
     queryset = BlogPost.objects.all()
-    serializer_class = BlogPostSerializer
+    serializer_class = BlogPostCreateUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_update(self, serializer):
-        serializer.save(author=self.request.user)
+        if serializer.instance.author != self.request.user:
+            raise PermissionDenied("You can only edit your own blog posts")
+        serializer.save()
 
 # Delete a BlogPost (Only by the author)
 class BlogPostDeleteView(generics.DestroyAPIView):
     queryset = BlogPost.objects.all()
-    serializer_class = BlogPostSerializer
+    serializer_class = BlogPostCreateUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class CategoryListView(generics.ListAPIView):
+    queryset = Category.objects.all().order_by('name')
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class TagListView(generics.ListAPIView):
+    queryset = Tag.objects.all().order_by('name')
+    serializer_class =  TagSerializer
+    permission_classes = [permissions.AllowAny]
+
+

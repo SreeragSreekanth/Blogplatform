@@ -20,3 +20,6 @@ Thumbs.db
 
 # VSCode
 .vscode/
+
+blog_platform/blogenv/
+

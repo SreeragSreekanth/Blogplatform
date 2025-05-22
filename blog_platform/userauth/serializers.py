@@ -1,7 +1,15 @@
 from rest_framework import serializers
 from .models import CustomUser
 from django.contrib.auth.password_validation import validate_password
+from django.db import IntegrityError
 
+
+
+from rest_framework import serializers
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import get_user_model
+
+CustomUser = get_user_model()
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -10,6 +18,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'bio', 'profile_picture', 'password', 'password2']
+
+    def validate_username(self, value):
+        if CustomUser.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username already exists.")
+        return value
+
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already exists.")
+        return value
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -21,14 +39,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         user = CustomUser(**validated_data)
         user.set_password(password)
-        user.save()
+        try:
+            user.save()
+        except IntegrityError as e:
+            raise serializers.ValidationError("Username or email already exists.")
         return user
 
 
+
 class UserProfileSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'bio', 'profile_picture']
+        read_only_fields = ['username', 'email']
 
     def update(self, instance, validated_data):
         # Update user instance fields
