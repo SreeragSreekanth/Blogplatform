@@ -38,16 +38,23 @@ export default function BlogDetail() {
   }, [slug]);
 
   const handleDelete = async () => {
+
+    const accessToken = localStorage.getItem("access");
+    if (!accessToken) {
+      setError("You must be logged in to update a post.");
+      return;
+    }
+
     const confirmDelete = window.confirm("Are you sure you want to delete this post?");
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/delete/`, {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.slug}/delete/`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
-      navigate("/"); // redirect to homepage
+      navigate("/blogs"); // redirect to homepage
     } catch (err) {
       alert("Failed to delete post.");
       console.error("Delete error:", err);
@@ -165,7 +172,7 @@ export default function BlogDetail() {
               <img
                 src={blog.image}
                 alt={blog.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 loading="lazy"
               />
             </figure>

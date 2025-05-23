@@ -4,6 +4,8 @@ from .serializers import BlogPostCreateUpdateSerializer, BlogPostDetailSerialize
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.exceptions import PermissionDenied
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 
 
 # Create a BlogPost
@@ -16,7 +18,7 @@ class BlogPostCreateView(generics.CreateAPIView):
         serializer.save(author=self.request.user)
 
 class BlogPostPagination(PageNumberPagination):
-    page_size = 5  # You can adjust the number of posts per page
+    page_size = 2  # You can adjust the number of posts per page
     page_size_query_param = 'page_size'
     max_page_size = 20
 
@@ -61,16 +63,23 @@ class BlogPostDeleteView(generics.DestroyAPIView):
     lookup_field = 'slug'
     permission_classes = [permissions.IsAuthenticated]
 
+    def delete(self, request, slug):
+        post = get_object_or_404(BlogPost, slug=slug, author=request.user)
+        post.delete()
+        return Response({"detail": "Deleted successfully"}, status=204)
+
 
 class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = None
 
 
 class TagListView(generics.ListAPIView):
     queryset = Tag.objects.all().order_by('name')
     serializer_class =  TagSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = None
 
 

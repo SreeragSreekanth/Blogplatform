@@ -22,8 +22,8 @@ function CreateBlog() {
           axios.get(`${process.env.REACT_APP_API_URL}/tags/`)
         ]);
 
-        setCategories(categoriesRes.data.results || categoriesRes.data);
-        setTags(tagsRes.data.results || tagsRes.data);
+        setCategories(categoriesRes.data);
+        setTags(tagsRes.data);
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Failed to load required data');

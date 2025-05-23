@@ -45,11 +45,11 @@ export default function BlogEditForm() {
         const catRes = await axios.get(
           `${process.env.REACT_APP_API_URL}/categories/`
         );
-        setCategories(catRes.data.results);
+        setCategories(catRes.data);
 
         // Fetch tags
         const tagRes = await axios.get(`${process.env.REACT_APP_API_URL}/tags/`);
-        setAllTags(tagRes.data.results);
+        setAllTags(tagRes.data);
       } catch (err) {
         console.error(err);
         setError("Failed to load blog post or categories/tags.");
