@@ -5,6 +5,7 @@ import { FiCalendar, FiUser, FiTag, FiFolder } from "react-icons/fi";
 import { motion } from "framer-motion";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import CommentsList from "../components/CommentsList"; // ✅ import the comments component
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -20,7 +21,7 @@ export default function BlogDetail() {
         setLoading(true);
         setError(null);
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/posts/${slug}/`);
-        
+
         if (!response.data.author) {
           throw new Error("Author information missing from blog post");
         }
@@ -38,7 +39,6 @@ export default function BlogDetail() {
   }, [slug]);
 
   const handleDelete = async () => {
-
     const accessToken = localStorage.getItem("access");
     if (!accessToken) {
       setError("You must be logged in to update a post.");
@@ -54,7 +54,7 @@ export default function BlogDetail() {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      navigate("/blogs"); // redirect to homepage
+      navigate("/blogs");
     } catch (err) {
       alert("Failed to delete post.");
       console.error("Delete error:", err);
@@ -80,7 +80,7 @@ export default function BlogDetail() {
 
   if (error || !blog) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="min-h-screen flex items-center justify-center bg-gray-50"
@@ -88,9 +88,7 @@ export default function BlogDetail() {
         <div className="text-center p-8 max-w-md bg-white rounded-xl shadow-lg">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Post Unavailable</h2>
-          <p className="text-gray-600 mb-6">
-            {error || "This blog post cannot be displayed."}
-          </p>
+          <p className="text-gray-600 mb-6">{error || "This blog post cannot be displayed."}</p>
           <a
             href="/"
             className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
@@ -127,11 +125,8 @@ export default function BlogDetail() {
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              {blog.title}
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{blog.title}</h1>
 
-            {/* ✅ Conditional Buttons */}
             {loggedInUsername === blog.author && (
               <div className="flex gap-4 mt-4">
                 <Link
@@ -157,8 +152,11 @@ export default function BlogDetail() {
                     {blog.category.name}
                   </span>
                 )}
-                {blog.tags?.map(tag => (
-                  <span key={tag.id} className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-sm">
+                {blog.tags?.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-sm"
+                  >
                     <FiTag className="mr-1" />
                     {tag.name}
                   </span>
@@ -188,6 +186,9 @@ export default function BlogDetail() {
             Last updated: {new Date(blog.updated_at).toLocaleDateString()}
           </footer>
         </article>
+
+        {/* ✅ Comments Module */}
+        <CommentsList postId={blog.id} loggedInUsername={loggedInUsername} />
       </div>
     </motion.div>
   );

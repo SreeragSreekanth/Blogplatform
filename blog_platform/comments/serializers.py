@@ -14,3 +14,8 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'post', 'user', 'content', 'created_at', 'updated_at','parent', 'replies']
         read_only_fields = ['id', 'created_at', 'post']
+
+    def get_parent_user(self, obj):
+        return obj.parent.user.username if obj.parent else None
+    
+    
