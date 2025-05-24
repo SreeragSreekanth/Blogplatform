@@ -1,10 +1,11 @@
-from rest_framework import generics, status
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Like, Bookmark
 from blogpost.models import BlogPost
+from blogpost.serializers import BlogPostDetailSerializer # Import your blog post serializer
 from .serializers import LikeSerializer, BookmarkSerializer
-from notifications.utils import send_notification  # Import the notification function
+from notifications.utils import send_notification
 
 
 # Like a Post
@@ -19,18 +20,17 @@ class LikeCreateView(generics.CreateAPIView):
         except BlogPost.DoesNotExist:
             return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if the like already exists
         like, created = Like.objects.get_or_create(user=user, post=post)
         if not created:
             return Response({"message": "Already liked"}, status=status.HTTP_200_OK)
         
-        # Send notification to the post author
         send_notification(
             user_id=post.author,
             message=f"Your post '{post.title}' was liked by {request.user.username}."
         )
         
         return Response({"message": "Post liked"}, status=status.HTTP_201_CREATED)
+
 
 # Unlike a Post
 class LikeDeleteView(generics.DestroyAPIView):
@@ -46,6 +46,7 @@ class LikeDeleteView(generics.DestroyAPIView):
         except (BlogPost.DoesNotExist, Like.DoesNotExist):
             return Response({"error": "Like not found"}, status=status.HTTP_404_NOT_FOUND)
 
+
 # Bookmark a Post
 class BookmarkCreateView(generics.CreateAPIView):
     serializer_class = BookmarkSerializer
@@ -58,12 +59,12 @@ class BookmarkCreateView(generics.CreateAPIView):
         except BlogPost.DoesNotExist:
             return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if the bookmark already exists
         bookmark, created = Bookmark.objects.get_or_create(user=user, post=post)
         if not created:
             return Response({"message": "Already bookmarked"}, status=status.HTTP_200_OK)
 
         return Response({"message": "Post bookmarked"}, status=status.HTTP_201_CREATED)
+
 
 # Remove Bookmark
 class BookmarkDeleteView(generics.DestroyAPIView):
@@ -79,18 +80,21 @@ class BookmarkDeleteView(generics.DestroyAPIView):
         except (BlogPost.DoesNotExist, Bookmark.DoesNotExist):
             return Response({"error": "Bookmark not found"}, status=status.HTTP_404_NOT_FOUND)
 
-# List Liked Posts
-class LikedPostsListView(generics.ListAPIView):
-    serializer_class = LikeSerializer
-    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Like.objects.filter(user=self.request.user)
-
-# List Bookmarked Posts
+# List Bookmarked Posts (returns full blog posts bookmarked by the user)
 class BookmarkedPostsListView(generics.ListAPIView):
-    serializer_class = BookmarkSerializer
+    serializer_class = BlogPostDetailSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Bookmark.objects.filter(user=self.request.user)
+        bookmarked_post_ids = Bookmark.objects.filter(user=self.request.user).values_list('post_id', flat=True)
+        return BlogPost.objects.filter(id__in=bookmarked_post_ids).order_by('-created_at')
+
+
+# List blogs authored by logged-in user
+class UserBlogsListView(generics.ListAPIView):
+    serializer_class = BlogPostDetailSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return BlogPost.objects.filter(author=self.request.user).order_by('-created_at')

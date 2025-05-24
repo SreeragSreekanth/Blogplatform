@@ -21,3 +21,10 @@ class BookmarkSerializer(serializers.ModelSerializer):
         model = Bookmark
         fields = ['id', 'post', 'post_title', 'author_name', 'created_at']
         read_only_fields = ['post_title', 'author_name', 'created_at']
+
+class BlogPostSerializer(serializers.ModelSerializer):
+    author_name = serializers.CharField(source='author.username', read_only=True)
+
+    class Meta:
+        model = BlogPost
+        fields = ['id', 'title', 'content', 'author_name', 'created_at', 'updated_at']

@@ -5,15 +5,20 @@ import { FiCalendar, FiUser, FiTag, FiFolder } from "react-icons/fi";
 import { motion } from "framer-motion";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import CommentsList from "../components/CommentsList"; // ✅ import the comments component
+import CommentsList from "../components/CommentsList";
 
 export default function BlogDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const loggedInUsername = localStorage.getItem("username");
+  const accessToken = localStorage.getItem("access");
+
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -27,6 +32,24 @@ export default function BlogDetail() {
         }
 
         setBlog(response.data);
+
+        if (accessToken) {
+          const config = { headers: { Authorization: `Bearer ${accessToken}` } };
+          const [likesRes, bookmarksRes] = await Promise.all([
+            axios.get(`${process.env.REACT_APP_API_URL}/likes/`, config),
+            axios.get(`${process.env.REACT_APP_API_URL}/bookmarks/`, config),
+          ]);
+
+          const userLikes = Array.isArray(likesRes.data.results) ? likesRes.data.results : likesRes.data;
+          const userBookmarks = Array.isArray(bookmarksRes.data.results) ? bookmarksRes.data.results : bookmarksRes.data;
+
+          setIsLiked(userLikes.some((like) => like.post === response.data.id));
+          setIsBookmarked(userBookmarks.some((bm) => bm.post === response.data.id));
+          console.log("LIKES RESPONSE:", likesRes.data);
+          console.log("BOOKMARKS RESPONSE:", bookmarksRes.data);
+
+
+        }
       } catch (err) {
         console.error("Error loading blog:", err);
         setError(err.response?.data?.message || err.message || "Failed to load blog post");
@@ -39,9 +62,8 @@ export default function BlogDetail() {
   }, [slug]);
 
   const handleDelete = async () => {
-    const accessToken = localStorage.getItem("access");
     if (!accessToken) {
-      setError("You must be logged in to update a post.");
+      setError("You must be logged in to delete a post.");
       return;
     }
 
@@ -58,6 +80,40 @@ export default function BlogDetail() {
     } catch (err) {
       alert("Failed to delete post.");
       console.error("Delete error:", err);
+    }
+  };
+
+  const toggleLike = async () => {
+    if (!accessToken) return alert("Login required to like");
+    const config = { headers: { Authorization: `Bearer ${accessToken}` } };
+
+    try {
+      if (isLiked) {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/unlike/`, config);
+        setIsLiked(false);
+      } else {
+        await axios.post(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/like/`, {}, config);
+        setIsLiked(true);
+      }
+    } catch (err) {
+      console.error("Like error:", err);
+    }
+  };
+
+  const toggleBookmark = async () => {
+    if (!accessToken) return alert("Login required to bookmark");
+    const config = { headers: { Authorization: `Bearer ${accessToken}` } };
+
+    try {
+      if (isBookmarked) {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/unbookmark/`, config);
+        setIsBookmarked(false);
+      } else {
+        await axios.post(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/bookmark/`, {}, config);
+        setIsBookmarked(true);
+      }
+    } catch (err) {
+      console.error("Bookmark error:", err);
     }
   };
 
@@ -163,6 +219,22 @@ export default function BlogDetail() {
                 ))}
               </div>
             )}
+
+            <div className="flex gap-4 mt-6">
+              <button
+                onClick={toggleLike}
+                className={`px-4 py-2 rounded ${isLiked ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-800"}`}
+              >
+                {isLiked ? "❤️ Liked" : "🤍 Like"}
+              </button>
+
+              <button
+                onClick={toggleBookmark}
+                className={`px-4 py-2 rounded ${isBookmarked ? "bg-green-600 text-white" : "bg-green-100 text-green-800"}`}
+              >
+                {isBookmarked ? "🔖 Bookmarked" : "📌 Bookmark"}
+              </button>
+            </div>
           </header>
 
           {blog.image && (

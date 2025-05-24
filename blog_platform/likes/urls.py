@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
-    LikeCreateView, LikeDeleteView, BookmarkCreateView, BookmarkDeleteView, 
-    LikedPostsListView, BookmarkedPostsListView
+    LikeCreateView, LikeDeleteView,
+    BookmarkCreateView, BookmarkDeleteView, 
+    BookmarkedPostsListView, UserBlogsListView
 )
 
 urlpatterns = [
@@ -13,7 +14,9 @@ urlpatterns = [
     path('posts/<int:post_id>/bookmark/', BookmarkCreateView.as_view(), name='bookmark-post'),
     path('posts/<int:post_id>/unbookmark/', BookmarkDeleteView.as_view(), name='unbookmark-post'),
 
-    # List liked and bookmarked posts
-    path('likes/', LikedPostsListView.as_view(), name='liked-posts'),
+    # List bookmarked posts
     path('bookmarks/', BookmarkedPostsListView.as_view(), name='bookmarked-posts'),
+
+    # List user's own blogs
+    path('profile/blogs/', UserBlogsListView.as_view(), name='user-blogs'),
 ]
