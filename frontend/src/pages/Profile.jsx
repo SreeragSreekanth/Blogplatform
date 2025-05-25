@@ -6,34 +6,79 @@ import { Link } from "react-router-dom";
 const API = process.env.REACT_APP_API_URL;
 
 export default function Profile() {
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState(null);
   const [ownBlogs, setOwnBlogs] = useState([]);
   const [bookmarkedBlogs, setBookmarkedBlogs] = useState([]);
   const [activeTab, setActiveTab] = useState("own");
+  const [edit, setEdit] = useState(false);
+  const [formData, setFormData] = useState({ bio: "", profile_picture: null });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user profile and blogs
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const headers = {
+        Authorization: `Bearer ${localStorage.getItem("access")}`,
+      };
+
+      const profileRes = await axios.get(`${API}/profile/`, { headers });
+      setUser(profileRes.data);
+      setFormData({ bio: profileRes.data.bio || "", profile_picture: null });
+
+      const ownBlogsRes = await axios.get(`${API}/profile/blogs/`, { headers });
+      setOwnBlogs(ownBlogsRes.data.results);
+
+      const bookmarkedRes = await axios.get(`${API}/profile/bookmarked/`, { headers });
+      setBookmarkedBlogs(bookmarkedRes.data.results);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const headers = {
-          Authorization: `Bearer ${localStorage.getItem("access")}`,
-        };
-
-        const profileRes = await axios.get(`${API}/profile/`, { headers });
-        setUser(profileRes.data);
-
-        const ownBlogsRes = await axios.get(`${API}/profile/blogs/`, { headers });
-        setOwnBlogs(ownBlogsRes.data.results);
-
-        const bookmarkedRes = await axios.get(`${API}/profile/bookmarked/`, { headers });
-        setBookmarkedBlogs(bookmarkedRes.data.results);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      }
-    };
-
     fetchProfile();
   }, []);
 
+  // Handle input changes for edit form
+  const handleChange = (e) => {
+    if (e.target.name === "profile_picture") {
+      setFormData({ ...formData, profile_picture: e.target.files[0] });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
+  };
+
+  // Submit updated profile data
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const form = new FormData();
+    form.append("username", user.username); // usually required by backend
+    form.append("email", user.email);       // usually required by backend
+    form.append("bio", formData.bio || "");
+
+    if (formData.profile_picture) {
+      form.append("profile_picture", formData.profile_picture);
+    }
+
+    try {
+      await axios.put(`${API}/profile/`, form, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setEdit(false);
+      fetchProfile();
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
+  };
+
+  // Render blog card UI
   const renderBlogCard = (blog) => (
     <article
       key={blog.id}
@@ -66,7 +111,10 @@ export default function Profile() {
           </span>
         )}
         {blog.tags?.map((tag) => (
-          <span key={tag.id} className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full flex items-center">
+          <span
+            key={tag.id}
+            className="bg-gray-200 text-gray-800 px-2 py-1 rounded-full flex items-center"
+          >
             <FiTag className="mr-1" /> {tag.name}
           </span>
         ))}
@@ -90,42 +138,122 @@ export default function Profile() {
     return <div className="space-y-8">{blogs.map(renderBlogCard)}</div>;
   };
 
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-700">
+        <div className="text-xl font-semibold">Loading your profile...</div>
+      </div>
+    );
+
+  if (!user)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">
+        <div className="text-xl font-semibold">Failed to load profile</div>
+      </div>
+    );
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         {/* Profile Header */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-24 h-24 bg-gray-300 rounded-full mb-4"></div>
+          {user.profile_picture ? (
+            <img
+              src={user.profile_picture}
+              alt="Profile"
+              className="w-24 h-24 rounded-full object-cover mb-4 border-4 border-indigo-500"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-indigo-300 flex items-center justify-center text-5xl font-bold text-indigo-700 mb-4">
+              {user.username.charAt(0).toUpperCase()}
+            </div>
+          )}
           <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
           <p className="text-gray-500 mt-2">{user.bio || "No bio provided."}</p>
+
+          {/* Edit Profile Button */}
+          {!edit && (
+            <button
+              onClick={() => setEdit(true)}
+              className="mt-4 px-6 py-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition"
+            >
+              Edit Profile
+            </button>
+          )}
         </div>
+
+        {/* Edit Profile Form */}
+        {edit && (
+          <form onSubmit={handleSubmit} className="mb-10 max-w-2xl mx-auto space-y-6">
+            <div>
+              <label className="block text-gray-700 mb-2 font-medium">Bio</label>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                rows={4}
+                placeholder="Tell us something about yourself..."
+                className="w-full rounded-lg p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 mb-2 font-medium">Profile Picture</label>
+              <input
+                type="file"
+                name="profile_picture"
+                accept="image/*"
+                onChange={handleChange}
+                className="text-gray-700"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => setEdit(false)}
+                className="px-5 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition font-semibold"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Toggle Tabs */}
-        <div className="flex justify-center space-x-4 mb-10">
-          <button
-            onClick={() => setActiveTab("own")}
-            className={`px-4 py-2 rounded-full font-medium ${
-              activeTab === "own"
-                ? "bg-indigo-600 text-white"
-                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Own Blogs
-          </button>
-          <button
-            onClick={() => setActiveTab("bookmarked")}
-            className={`px-4 py-2 rounded-full font-medium ${
-              activeTab === "bookmarked"
-                ? "bg-indigo-600 text-white"
-                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Bookmarked Blogs
-          </button>
-        </div>
+        {!edit && (
+          <div className="flex justify-center space-x-4 mb-10">
+            <button
+              onClick={() => setActiveTab("own")}
+              className={`px-4 py-2 rounded-full font-medium ${
+                activeTab === "own"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              Own Blogs
+            </button>
+            <button
+              onClick={() => setActiveTab("bookmarked")}
+              className={`px-4 py-2 rounded-full font-medium ${
+                activeTab === "bookmarked"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              Bookmarked Blogs
+            </button>
+          </div>
+        )}
 
         {/* Blog List */}
-        {renderBlogList()}
+        {!edit && renderBlogList()}
       </div>
     </div>
   );

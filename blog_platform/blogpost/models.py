@@ -45,3 +45,7 @@ class BlogPost(models.Model):
         # Ensure slug doesn't exceed max_length
         self.slug = self.slug[:200]
         super().save(*args, **kwargs)
+
+    @property
+    def likes_count(self):
+        return self.likes.count()

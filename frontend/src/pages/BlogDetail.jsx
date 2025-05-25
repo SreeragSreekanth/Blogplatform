@@ -7,6 +7,7 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import CommentsList from "../components/CommentsList";
 
+
 export default function BlogDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -16,9 +17,9 @@ export default function BlogDetail() {
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -26,30 +27,13 @@ export default function BlogDetail() {
         setLoading(true);
         setError(null);
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/posts/${slug}/`);
+        const data = response.data;
+        if (!data.author) throw new Error("Author information missing");
 
-        if (!response.data.author) {
-          throw new Error("Author information missing from blog post");
-        }
-
-        setBlog(response.data);
-
-        if (accessToken) {
-          const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-          const [likesRes, bookmarksRes] = await Promise.all([
-            axios.get(`${process.env.REACT_APP_API_URL}/likes/`, config),
-            axios.get(`${process.env.REACT_APP_API_URL}/bookmarks/`, config),
-          ]);
-
-          const userLikes = Array.isArray(likesRes.data.results) ? likesRes.data.results : likesRes.data;
-          const userBookmarks = Array.isArray(bookmarksRes.data.results) ? bookmarksRes.data.results : bookmarksRes.data;
-
-          setIsLiked(userLikes.some((like) => like.post === response.data.id));
-          setIsBookmarked(userBookmarks.some((bm) => bm.post === response.data.id));
-          console.log("LIKES RESPONSE:", likesRes.data);
-          console.log("BOOKMARKS RESPONSE:", bookmarksRes.data);
-
-
-        }
+        setBlog(data);
+        setIsLiked(data.is_liked || false);
+        setIsBookmarked(data.is_bookmarked || false);
+        setLikeCount(data.likes_count || 0);
       } catch (err) {
         console.error("Error loading blog:", err);
         setError(err.response?.data?.message || err.message || "Failed to load blog post");
@@ -72,9 +56,7 @@ export default function BlogDetail() {
 
     try {
       await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.slug}/delete/`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       navigate("/blogs");
     } catch (err) {
@@ -89,11 +71,13 @@ export default function BlogDetail() {
 
     try {
       if (isLiked) {
-        await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/unlike/`, config);
+        await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.slug}/unlike/`, config);
         setIsLiked(false);
+        setLikeCount((prev) => prev - 1);
       } else {
-        await axios.post(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/like/`, {}, config);
+        await axios.post(`${process.env.REACT_APP_API_URL}/posts/${blog.slug}/like/`, {}, config);
         setIsLiked(true);
+        setLikeCount((prev) => prev + 1);
       }
     } catch (err) {
       console.error("Like error:", err);
@@ -106,10 +90,10 @@ export default function BlogDetail() {
 
     try {
       if (isBookmarked) {
-        await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/unbookmark/`, config);
+        await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${blog.slug}/unbookmark/`, config);
         setIsBookmarked(false);
       } else {
-        await axios.post(`${process.env.REACT_APP_API_URL}/posts/${blog.id}/bookmark/`, {}, config);
+        await axios.post(`${process.env.REACT_APP_API_URL}/posts/${blog.slug}/bookmark/`, {}, config);
         setIsBookmarked(true);
       }
     } catch (err) {
@@ -120,16 +104,12 @@ export default function BlogDetail() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 md:p-10 max-w-4xl mx-auto">
-        <div className="mb-8">
-          <Skeleton height={40} width="80%" className="mb-4" />
-          <Skeleton height={20} width="60%" />
-        </div>
+        <Skeleton height={40} width="80%" className="mb-4" />
+        <Skeleton height={20} width="60%" />
         <Skeleton height={400} className="mb-8 rounded-xl" />
-        <div className="space-y-4">
-          {[...Array(8)].map((_, i) => (
-            <Skeleton key={i} height={20} width={i % 2 ? "90%" : "100%"} />
-          ))}
-        </div>
+        {[...Array(6)].map((_, i) => (
+          <Skeleton key={i} height={20} width={i % 2 ? "90%" : "100%"} />
+        ))}
       </div>
     );
   }
@@ -145,10 +125,7 @@ export default function BlogDetail() {
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Post Unavailable</h2>
           <p className="text-gray-600 mb-6">{error || "This blog post cannot be displayed."}</p>
-          <a
-            href="/"
-            className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-          >
+          <a href="/" className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
             Back to Home
           </a>
         </div>
@@ -225,7 +202,7 @@ export default function BlogDetail() {
                 onClick={toggleLike}
                 className={`px-4 py-2 rounded ${isLiked ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-800"}`}
               >
-                {isLiked ? "❤️ Liked" : "🤍 Like"}
+                {isLiked ? "❤️ Liked" : "🤍 Like"} ({likeCount})
               </button>
 
               <button
@@ -249,9 +226,7 @@ export default function BlogDetail() {
           )}
 
           <div className="p-6 md:p-8 prose prose-lg max-w-none">
-            <div className="whitespace-pre-line text-gray-700 leading-relaxed">
-              {blog.content}
-            </div>
+            <div className="whitespace-pre-line text-gray-700 leading-relaxed">{blog.content}</div>
           </div>
 
           <footer className="p-6 md:p-8 border-t border-gray-200 text-sm text-gray-500">
@@ -259,9 +234,9 @@ export default function BlogDetail() {
           </footer>
         </article>
 
-        {/* ✅ Comments Module */}
         <CommentsList postId={blog.id} loggedInUsername={loggedInUsername} />
       </div>
     </motion.div>
+    
   );
 }
