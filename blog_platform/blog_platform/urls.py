@@ -9,7 +9,7 @@ urlpatterns = [
     path('api/', include('blogpost.urls')),  # Blog post management
     path('api/', include('comments.urls')),    # Comment management
     path('api/', include('likes.urls')),  # Like and Bookmark system
-    path('api/notifications/', include('notifications.urls')),
+    path('api/', include('notifications.urls')),
 
 ]
 

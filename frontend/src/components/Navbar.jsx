@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import Notification from "./Notifications"; 
 
 export default function Navbar() {
   const [username, setUsername] = useState(null);
@@ -55,41 +56,44 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {username ? (
-              <>
-                <div className="hidden md:flex items-center space-x-2">
-                  <span className="text-indigo-100 text-sm">Welcome,</span>
-                  <Link
-                    to={`/profile/${username}`}
-                    className="text-white font-medium hover:text-indigo-200 transition-colors duration-300"
-                  >
-                    {username}
-                  </Link>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300"
+          {username && <Notification />}
+
+          {username ? (
+            <>
+              <div className="hidden md:flex items-center space-x-2">
+                <span className="text-indigo-100 text-sm">Welcome,</span>
+                <Link
+                  to={`/profile/${username}`}
+                  className="text-white font-medium hover:text-indigo-200 transition-colors duration-300"
                 >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link 
-                  to="/login" 
-                  className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300"
-                >
-                  Login
+                  {username}
                 </Link>
-                <Link 
-                  to="/register" 
-                  className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300 shadow-md"
-                >
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link 
+                to="/login" 
+                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300"
+              >
+                Login
+              </Link>
+              <Link 
+                to="/register" 
+                className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300 shadow-md"
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
+
         </div>
       </div>
     </nav>
