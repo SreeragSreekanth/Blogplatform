@@ -1,13 +1,10 @@
 from rest_framework import serializers
 from .models import CustomUser
 from django.contrib.auth.password_validation import validate_password
-from django.db import IntegrityError
-
-
-
-from rest_framework import serializers
-from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
+from django.utils.encoding import force_str, smart_str, DjangoUnicodeDecodeError
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 CustomUser = get_user_model()
 
@@ -39,12 +36,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         user = CustomUser(**validated_data)
         user.set_password(password)
-        try:
-            user.save()
-        except IntegrityError as e:
-            raise serializers.ValidationError("Username or email already exists.")
+        user.save()
         return user
-
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -56,13 +49,43 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['username', 'email']
 
     def update(self, instance, validated_data):
-        # Update user instance fields
-        instance.username = validated_data.get('username', instance.username)
         instance.bio = validated_data.get('bio', instance.bio)
-
-        # If profile_picture is provided, update it
         if 'profile_picture' in validated_data:
             instance.profile_picture = validated_data.get('profile_picture')
-
         instance.save()
         return instance
+
+
+# Password Reset - Step 1: Request Email
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+# Password Reset - Step 2: Confirm New Password
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+    re_new_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        try:
+            uid = smart_str(urlsafe_base64_decode(attrs['uid']))
+            user = CustomUser.objects.get(id=uid)
+        except (DjangoUnicodeDecodeError, CustomUser.DoesNotExist):
+            raise serializers.ValidationError("Invalid reset link.")
+
+        if not PasswordResetTokenGenerator().check_token(user, attrs['token']):
+            raise serializers.ValidationError("Invalid or expired token.")
+
+        if attrs['new_password'] != attrs['re_new_password']:
+            raise serializers.ValidationError("Passwords do not match.")
+
+        attrs['user'] = user
+        return attrs
+
+    def save(self):
+        user = self.validated_data['user']
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user

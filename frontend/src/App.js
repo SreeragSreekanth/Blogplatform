@@ -11,6 +11,8 @@ import BlogList from "./pages/BlogList";
 import BlogDetail from "./pages/BlogDetail";
 import BlogCreate from "./components/BlogCreate";
 import BlogEditForm from "./components/BlogEditForm";
+import ResetPasswordConfirm from "./components/ResetPasswordConfirm";
+import PasswordResetRequest from "./pages/PasswordResetRequest";
 
 
 
@@ -28,7 +30,11 @@ function App() {
         <Route path="/blogs/:slug" element={<BlogDetail />} />
         <Route path="/blogs/create" element={<BlogCreate />} />
         <Route path="/blogs/:slug/edit" element={<BlogEditForm />} />
-
+        <Route
+          path="/reset-password-confirm/:uid/:token"
+          element={<ResetPasswordConfirm />}
+        />
+       <Route path="/password-reset" element={<PasswordResetRequest />} />
 
       </Routes>
     </Router>

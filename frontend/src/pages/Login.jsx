@@ -104,7 +104,14 @@ export default function Login() {
           >
             Login
           </button>
-
+          <div className="text-center mt-2">
+  <Link 
+    to="/password-reset" 
+    className="text-white hover:text-indigo-300 text-sm font-medium transition-colors"
+  >
+    Forgot Password?
+  </Link>
+</div>
           <div className="text-center mt-4">
             <Link 
               to="/register" 
