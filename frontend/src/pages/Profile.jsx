@@ -152,109 +152,142 @@ export default function Profile() {
       </div>
     );
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        {/* Profile Header */}
-        <div className="flex flex-col items-center mb-10">
-          {user.profile_picture ? (
-            <img
-              src={user.profile_picture}
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover mb-4 border-4 border-indigo-500"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-indigo-300 flex items-center justify-center text-5xl font-bold text-indigo-700 mb-4">
-              {user.username.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
-          <p className="text-gray-500 mt-2">{user.bio || "No bio provided."}</p>
-
-          {/* Edit Profile Button */}
-          {!edit && (
-            <button
-              onClick={() => setEdit(true)}
-              className="mt-4 px-6 py-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition"
+    return (
+      <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          {/* Profile Header */}
+          <header className="flex flex-col items-center mb-10">
+            {user.profile_picture ? (
+              <img
+                src={user.profile_picture}
+                alt={`${user.username}'s profile picture`}
+                className="w-24 h-24 rounded-full object-cover mb-4 border-4 border-indigo-500 shadow-md"
+              />
+            ) : (
+              <div
+                role="img"
+                aria-label={`${user.username} profile initial`}
+                className="w-24 h-24 rounded-full bg-indigo-300 flex items-center justify-center text-5xl font-bold text-indigo-700 mb-4 shadow-md"
+              >
+                {user.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <h1 className="text-3xl font-bold text-gray-900 leading-snug">{user.username}</h1>
+            <p className="text-gray-500 mt-2 max-w-md text-center leading-relaxed">{user.bio || "No bio provided."}</p>
+    
+            {/* Edit Profile Button */}
+            {!edit && (
+              <button
+                onClick={() => setEdit(true)}
+                className="mt-4 px-6 py-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                aria-label="Edit Profile"
+              >
+                Edit Profile
+              </button>
+            )}
+          </header>
+    
+          {/* Edit Profile Form */}
+          {edit && (
+            <form
+              onSubmit={handleSubmit}
+              className="mb-10 max-w-2xl mx-auto space-y-6"
+              aria-label="Edit Profile Form"
             >
-              Edit Profile
-            </button>
+              <div>
+                <label htmlFor="bio" className="block text-gray-700 mb-2 font-medium">
+                  Bio
+                </label>
+                <textarea
+                  id="bio"
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Tell us something about yourself..."
+                  className="w-full rounded-lg p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                />
+              </div>
+    
+              <div>
+                <label htmlFor="profile_picture" className="block text-gray-700 mb-2 font-medium">
+                  Profile Picture
+                </label>
+                <input
+                  id="profile_picture"
+                  type="file"
+                  name="profile_picture"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="text-gray-700"
+                />
+              </div>
+    
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setEdit(false)}
+                  className="px-5 py-2 rounded-md bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition font-semibold"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          )}
+    
+          {/* Toggle Tabs */}
+          {!edit && (
+            <nav className="flex justify-center space-x-4 mb-10" role="tablist" aria-label="Blog Tabs">
+              <button
+                onClick={() => setActiveTab("own")}
+                className={`px-4 py-2 rounded-full font-medium ${
+                  activeTab === "own"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+                } focus:outline-none focus:ring-2 focus:ring-indigo-400 transition`}
+                role="tab"
+                aria-selected={activeTab === "own"}
+                aria-controls="own-blogs-panel"
+                id="own-blogs-tab"
+              >
+                Own Blogs
+              </button>
+              <button
+                onClick={() => setActiveTab("bookmarked")}
+                className={`px-4 py-2 rounded-full font-medium ${
+                  activeTab === "bookmarked"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+                } focus:outline-none focus:ring-2 focus:ring-indigo-400 transition`}
+                role="tab"
+                aria-selected={activeTab === "bookmarked"}
+                aria-controls="bookmarked-blogs-panel"
+                id="bookmarked-blogs-tab"
+              >
+                Bookmarked Blogs
+              </button>
+            </nav>
+          )}
+    
+          {/* Blog List */}
+          {!edit && (
+            <section
+              id={activeTab === "own" ? "own-blogs-panel" : "bookmarked-blogs-panel"}
+              role="tabpanel"
+              aria-labelledby={activeTab === "own" ? "own-blogs-tab" : "bookmarked-blogs-tab"}
+              className="transition-opacity duration-300"
+            >
+              {renderBlogList()}
+            </section>
           )}
         </div>
-
-        {/* Edit Profile Form */}
-        {edit && (
-          <form onSubmit={handleSubmit} className="mb-10 max-w-2xl mx-auto space-y-6">
-            <div>
-              <label className="block text-gray-700 mb-2 font-medium">Bio</label>
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                rows={4}
-                placeholder="Tell us something about yourself..."
-                className="w-full rounded-lg p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 mb-2 font-medium">Profile Picture</label>
-              <input
-                type="file"
-                name="profile_picture"
-                accept="image/*"
-                onChange={handleChange}
-                className="text-gray-700"
-              />
-            </div>
-
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={() => setEdit(false)}
-                className="px-5 py-2 rounded-md bg-gray-300 hover:bg-gray-400 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition font-semibold"
-              >
-                Save Changes
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Toggle Tabs */}
-        {!edit && (
-          <div className="flex justify-center space-x-4 mb-10">
-            <button
-              onClick={() => setActiveTab("own")}
-              className={`px-4 py-2 rounded-full font-medium ${
-                activeTab === "own"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              Own Blogs
-            </button>
-            <button
-              onClick={() => setActiveTab("bookmarked")}
-              className={`px-4 py-2 rounded-full font-medium ${
-                activeTab === "bookmarked"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              Bookmarked Blogs
-            </button>
-          </div>
-        )}
-
-        {/* Blog List */}
-        {!edit && renderBlogList()}
-      </div>
-    </div>
-  );
+      </main>
+    );
+    
 }

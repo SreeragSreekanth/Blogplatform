@@ -39,11 +39,8 @@ const ResetPasswordConfirm = () => {
         navigate("/login");
       }, 2000);
     } catch (error) {
-      setError(
-        error.response?.data
-          ? JSON.stringify(error.response.data)
-          : "Something went wrong"
-      );
+      setError("Failed to reset password. Please try again.");
+      console.error(err.response?.data || err.message);
     }
   };
 
