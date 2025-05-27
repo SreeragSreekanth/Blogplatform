@@ -7,7 +7,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.sqlite3
+
 env/
 *.env
 

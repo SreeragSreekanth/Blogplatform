@@ -56,8 +56,7 @@ MIDDLEWARE = [
 ]
 
 # CORS
-CORS_ORIGIN_ALLOW_ALL = False  # You can restrict this in production if needed
-
+CORS_ORIGIN_ALLOW_ALL = False  
 # URLs and Templates
 ROOT_URLCONF = 'blog_platform.urls'
 
@@ -80,7 +79,9 @@ WSGI_APPLICATION = 'blog_platform.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': dj_database_url.config(default=env('DATABASE_URL'))
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3'  # fallback to SQLite locally
+    )
 }
 
 # Password Validators
