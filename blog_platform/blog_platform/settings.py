@@ -55,6 +55,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "https://blogplatform-snowy.vercel.app",
+    "http://localhost:3000",  # for local testing if needed
+]
+
 # CORS
 CORS_ORIGIN_ALLOW_ALL = False  
 # URLs and Templates
