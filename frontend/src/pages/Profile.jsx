@@ -160,7 +160,7 @@ export default function Profile() {
             {user.profile_picture ? (
               <img
                 src={user.profile_picture}
-                alt={`${user.username}'s profile picture`}
+                alt={`${user.username}'s profile`}
                 className="w-24 h-24 rounded-full object-cover mb-4 border-4 border-indigo-500 shadow-md"
               />
             ) : (

@@ -40,7 +40,7 @@ const ResetPasswordConfirm = () => {
       }, 2000);
     } catch (error) {
       setError("Failed to reset password. Please try again.");
-      console.error(err.response?.data || err.message);
+      console.error(error.response?.data || error.message);
     }
   };
 

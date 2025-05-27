@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import CommentItem from "./CommentItem";
 
@@ -6,14 +6,14 @@ const CommentsList = ({ postId, loggedInUsername }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/posts/${postId}/comments/`);
       setComments(res.data.results);
     } catch (err) {
       console.error("Error fetching comments:", err);
     }
-  };
+  }, [postId]);  // depends on postId because URL changes
 
   const handlePostComment = async () => {
     const access = localStorage.getItem("access");
@@ -26,7 +26,7 @@ const CommentsList = ({ postId, loggedInUsername }) => {
         { headers: { Authorization: `Bearer ${access}` } }
       );
       setNewComment("");
-      fetchComments();
+      fetchComments();  // call updated stable function
     } catch (err) {
       console.error("Failed to post comment:", err);
     }
@@ -34,7 +34,7 @@ const CommentsList = ({ postId, loggedInUsername }) => {
 
   useEffect(() => {
     fetchComments();
-  }, [postId]);
+  }, [fetchComments]);  // add fetchComments here
 
   return (
     <div className="mt-10 bg-white rounded-xl shadow p-6">
