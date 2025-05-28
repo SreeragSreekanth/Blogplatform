@@ -9,9 +9,9 @@ import Profile from "./pages/Profile";
 import Navbar from "./components/Navbar";
 import BlogList from "./pages/BlogList";
 import BlogDetail from "./pages/BlogDetail";
-import BlogCreate from "./components/BlogCreate";
-import BlogEditForm from "./components/BlogEditForm";
-import ResetPasswordConfirm from "./components/ResetPasswordConfirm";
+import BlogCreate from "./pages/BlogCreate";
+import BlogEditForm from "./pages/BlogEditForm";
+import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
 import PasswordResetRequest from "./pages/PasswordResetRequest";
 
 
